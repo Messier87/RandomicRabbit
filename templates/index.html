@@ -1,0 +1,148 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <title>Randomic Rabbit</title>
+    <script type="text/javascript" src="//code.jquery.com/jquery-1.4.2.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.5/socket.io.min.js"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
+  </body>
+    <script type="text/javascript" charset="utf-8">
+        $(document).ready(function() {
+            // Use a "/test" namespace.
+            // An application can open a connection on multiple namespaces, and
+            // Socket.IO will multiplex all those connections on a single
+            // physical channel. 
+            namespace = '/test';
+            var numbers_received = [];
+
+            // Connect to the Socket.IO server.
+            // The connection URL has the following format:
+            //     http[s]://<domain>:<port>[/<namespace>]
+            var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + namespace);
+
+            // Event handler for new connections.
+            // The callback function is invoked when a connection with the
+            // server is established.
+            socket.on('connect', function() {
+                socket.emit('server_response', {data: 'I\'m connected!'});
+            });
+
+            // Event handler for server sent data.
+            // The callback function is invoked whenever the server emits data
+            // to the client. The data is then displayed in the "Received"
+            // section of the page via text and a dynamic graph.
+            socket.on('server_response', function(msg) {
+                if (msg.number == 0) {
+                    $('#log').append($('<div/>').text('User '+ msg.data).html());
+                } else if (msg.number == 100) {
+                    $('#log').append('<br>' + $('<div/>').text('User '+ msg.data).html());
+                } else { 
+                     $('#log').append('<br>' + $('<div/>').text('Received ' + msg.data + ': ' +msg.number ).html());
+
+                    // On overflow set the scroll bar to bottom 
+                    var objDiv = document.getElementById("logDiv");
+                    objDiv.scrollTop = objDiv.scrollHeight;
+
+                     //maintain a list of ten numbers for the graph
+                    if (numbers_received.length >= 10){
+                        numbers_received.shift()
+                    }            
+                    numbers_received.push(msg.number);
+
+                // chart colors
+                var colors = ['#007bff','#28a745','#333333','#c3e6cb','#dc3545','#6c757d'];
+
+                /* large line chart */
+                var chLine = document.getElementById("chLine");
+                var chartData = {
+                    labels: ["r1", "r2", "r3", "r4", "r5", "r6", "r7","r8","r9","r10"],
+                    datasets: [{
+                    data: numbers_received,
+                    backgroundColor: colors[3],
+                    borderColor: colors[1],
+                    borderWidth: 4,
+                    pointBackgroundColor: colors[0]
+                    }]
+                };
+
+                if (chLine) {
+                    new Chart(chLine, {
+                        type: 'line',
+                        data: chartData,
+                        options: {
+                            scales: {
+                            yAxes: [{
+                                ticks: {
+                                    beginAtZero: false
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: false
+                        }
+                        }   
+                    });
+                  }
+                }
+            });
+
+            // Handler for the disconnect in the page.
+            // These accept data from the user and send it to the server in a
+            // variety of ways       
+            $('form#disconnect').submit(function(event) {
+                socket.emit('disconnect_request');
+                return false;
+            }); 
+        });
+    </script>
+</head>
+<body>
+
+
+<div class="jumbotron text-center">
+    <h1>Random Numbers by Randomic Rabbit</h1>
+</div>
+
+<div class="container">
+
+<div class="row">
+    <div class="col-sm-1"></div>
+    <div class="col-sm-5">
+    <form id="disconnect" method="POST" action="#">
+        <input type="submit" value="Disconnect">
+    </form>
+    <h2>Received:</h2>
+    </div>
+    <div class="col-sm-1"></div>
+</div>
+
+<div class="row">
+    <div class="col-sm-1"></div>
+    <div class="col-sm-5" >
+        <div class="overflow-auto" style="height:242px; border: 1px solid #ccc; padding: 8px; !important" id="logDiv"> 
+            <div id="log" ></div>    
+        </div>
+    </div>
+    <div class="col-sm-5">
+        <div class="card">
+            <div class="card-body">
+                    <canvas id="chLine" height="150"></canvas>
+            </div>
+        </div>           
+    </div>
+    <div class="col-sm-1"></div>
+</div>
+
+</div>
+
+</body>
+</html>
