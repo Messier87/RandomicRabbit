@@ -17,7 +17,7 @@ To run - please clone the repository and then set up your virtual environment us
 git clone https://github.com/Messier87/RandomicRabbit.git
 cd RandomicRabbit
 virtualenv randomicrabbit
-./randomicrabbit/Scripts/activate
+. randomicrabbit/bin/activate
 pip install -r requirements.txt  #(or in Windows - sometimes python -m pip install -r requirements.txt )
 ```
 
